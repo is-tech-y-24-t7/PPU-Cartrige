@@ -37,42 +37,63 @@ namespace GraphicProcessingUnit
         
         public byte ReadPrgRom(int index)
         {
-            
+            return _prgRom[index];
         }
         
         public byte ReadPrgRam(int index)
         {
-            
+            return _prgRam[index];
         }
         
         public void WritePrgRam(int index, byte data)
         {
-           
+            _prgRam[index] = data;
         }
         
         public byte ReadChr(int index)
         {
-            
+            return _chr[index];
         }
         
         public void WriteChr(int index, byte data)
         {
-            
+            if (!UsesChrRam) throw new Exception("Попытка записи в CHR ROM по индексу " + index.ToString("X4"));
+            _chr[index] = data;
         }
 
         void LoadPrgRom(BinaryReader reader)
         {
-            
+            int _prgRomOffset = ContainsTrainer ? 16 + 512 : 16;
+
+            reader.BaseStream.Seek(_prgRomOffset, SeekOrigin.Begin);
+
+            _prgRom = new byte[PrgRomBanks * 16384];
+            reader.Read(_prgRom, 0, PrgRomBanks * 16384);
         }
 
         void LoadChr(BinaryReader reader)
         {
-            
+            if (UsesChrRam)
+            {
+                _chr = new byte[8192];
+            }
+            else
+            {
+                _chr = new byte[ChrBanks * 8192];
+                reader.Read(_chr, 0, ChrBanks * 8192);
+            }
         }
 
         void ParseHeader(BinaryReader reader)
         {
-            
+            uint Num = reader.ReadUInt32();
+            if (Num != HeaderMagic)
+            {
+                System.Console.WriteLine("Значение заголовка (" + Num.ToString("X4") + ") неверно");
+                Invalid = true;
+                return;
+            }
+            // допилить
         }
     }   
 }
