@@ -25,8 +25,54 @@ namespace GraphicProcessingUnit
         
         public Cartridge(string path)
         {
+            FileStream stream = new FileStream(path, FileMode.Open, FileAccess.Read);
+            BinaryReader reader = new BinaryReader(stream);
+            Invalid = false;
+            ParseHeader(reader);
+            LoadPrgRom(reader);
+            LoadChr(reader);
+
+            _prgRam = new byte[8192];
+        }
+        
+        public byte ReadPrgRom(int index)
+        {
             
         }
         
+        public byte ReadPrgRam(int index)
+        {
+            
+        }
+        
+        public void WritePrgRam(int index, byte data)
+        {
+           
+        }
+        
+        public byte ReadChr(int index)
+        {
+            
+        }
+        
+        public void WriteChr(int index, byte data)
+        {
+            
+        }
+
+        void LoadPrgRom(BinaryReader reader)
+        {
+            
+        }
+
+        void LoadChr(BinaryReader reader)
+        {
+            
+        }
+
+        void ParseHeader(BinaryReader reader)
+        {
+            
+        }
     }   
 }
