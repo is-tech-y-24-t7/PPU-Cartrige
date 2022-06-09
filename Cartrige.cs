@@ -93,7 +93,40 @@ namespace GraphicProcessingUnit
                 Invalid = true;
                 return;
             }
-            // допилить
+            
+            // Размер PRG ROM'a
+            PrgRomBanks = reader.ReadByte();
+            System.Console.WriteLine((16 * PrgRomBanks).ToString() + "Kb в PRG ROM");
+
+            // Размер CHR ROM'a
+            ChrBanks = reader.ReadByte();
+            if (ChrBanks == 0) {
+                System.Console.WriteLine("Картридж использует CHR RAM");
+                ChrBanks = 2;
+                UsesChrRam = true;
+            }
+            else 
+            {
+                System.Console.WriteLine((8 * ChrBanks).ToString() + "Kb в CHR ROM");
+                UsesChrRam = false;
+            }
+
+            // Флаги 6
+            _flags6 = reader.ReadByte();
+            VerticalVramMirroring = (_flags6 & 0x01) != 0;
+            System.Console.WriteLine("Тип отзеркаливания VRAM: " + (VerticalVramMirroring ? "вертикальная" : "горизонтальная"));
+
+            BatteryBackedMemory = (_flags6 & 0x02) != 0;
+            if (BatteryBackedMemory) System.Console.WriteLine("Картридж содержит зависимую память с батарейным питанием");
+
+            ContainsTrainer = (_flags6 & 0x04) != 0;
+            if (ContainsTrainer) System.Console.WriteLine("Картридж содержит трейнер размером 512 байт");
+
+            // Флаги 7
+            _flags7 = reader.ReadByte();
+
+            // Номер маппера
+            MapperNumber = _flags7 & 0xF0 | (_flags6 >> 4 & 0xF);
         }
     }   
 }
