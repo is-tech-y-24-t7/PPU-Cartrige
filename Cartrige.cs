@@ -10,6 +10,7 @@ namespace GraphicProcessingUnit
         private byte[] _prgRom;
         private byte[] _chr;
         private byte[] _prgRam;
+
         public Console Console { get; set; }
         public int PrgRomBanks { get; private set; }
         public int ChrBanks { get; private set; }
@@ -21,6 +22,7 @@ namespace GraphicProcessingUnit
         public bool Invalid { get; private set; }
 
         private int _flags6;
+        private int _flags7;
         
         public Cartridge(string path)
         {
@@ -92,7 +94,7 @@ namespace GraphicProcessingUnit
             // 7 и более - не используем (считывать NES2 не будем)
 
             uint Num = reader.ReadUInt32();
-            if (Num != HeaderMagic)
+            if (Num != Signature)
             {
                 System.Console.WriteLine("Значение заголовка (" + Num.ToString("X4") + ") неверно");
                 Invalid = true;
@@ -119,6 +121,8 @@ namespace GraphicProcessingUnit
             // 1 бит содержит ли battery-backed PRG RAM
             // 2 бит есть ли трейнер
             // 3 бит пока-что не используем (вертикально-горизонтальный mirroring)
+            // 4 - 7 бит номер маппера.
+
             _flags6 = reader.ReadByte();
             VerticalVramMirroring = ((_flags6 & 0b00000001) != 0);
             System.Console.WriteLine("VRAM mirroring type: " + (VerticalVramMirroring ? "vertical" : "horizontal"));
@@ -127,11 +131,15 @@ namespace GraphicProcessingUnit
             else
                 System.Console.WriteLine("Горизонтальное отражение")
 
-            BatteryBackedMemory = (_flags6 & 0x02) != 0;
-            ContainsTrainer = (_flags6 & 0x04) != 0;
+            BatteryBackedMemory = (_flags6 & 0b00000010) != 0;
+            ContainsTrainer = (_flags6 & 0b00000100) != 0;
+
+            _flags7 = reader.ReadByte();
+
+            MapperNumber = _flags7 & 0x11110000 | (_flags6 & 0x11110000);
 
             //TODO: в будущем реализовать считывание 4-х экранного отражения
-            //TODO: реализовать считывание редко-используемых полей (байты 7-10)
+            //TODO: реализовать считывание редко-используемых полей (байты 8-10)
         }
     }   
 }
