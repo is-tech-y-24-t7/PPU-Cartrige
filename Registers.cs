@@ -6,7 +6,27 @@ namespace GraphicProcessingUnit
         readonly Console _console;
         byte[] _oam;
         ushort _oamAddr;
+		ushort _baseNametableAddress;
         int _vRamIncrement;
+        ushort _bgPatternTableAddress;
+        ushort _spritePatternTableAddress;
+        int _vRamIncrement;
+        byte _lastRegisterWrite;
+        byte _flagBaseNametableAddr;
+        byte _flagVRamIncrement;
+        byte _flagSpritePatternTableAddr;
+        byte _flagBgPatternTableAddr;
+        byte _flagSpriteSize;
+        byte _flagMasterSlaveSelect;
+        byte _nmiOutput;
+		byte _flagGreyscale;
+        byte _flagShowBackgroundLeft;
+        byte _flagShowSpritesLeft;
+        byte _flagShowBackground;
+        byte _flagShowSprites;
+        byte _flagEmphasizeRed;
+        byte _flagEmphasizeGreen;
+        byte _flagEmphasizeBlue;
         ushort v;
         ushort t;
         byte x;
@@ -71,13 +91,34 @@ namespace GraphicProcessingUnit
         // $2000
         public void WritePpuCtrl(byte data)
         {
-            // допилить
+            _flagBaseNametableAddr = (byte)(data & 0x3);
+            _flagVRamIncrement = (byte)((data >> 2) & 1);
+            _flagSpritePatternTableAddr = (byte)((data >> 3) & 1);
+            _flagBgPatternTableAddr = (byte)((data >> 4) & 1);
+            _flagSpriteSize = (byte)((data >> 5) & 1);
+            _flagMasterSlaveSelect = (byte)((data >> 6) & 1);
+            _nmiOutput = (byte)((data >> 7) & 1);
+
+            // Установка значений на основе флагов
+            _baseNametableAddress = (ushort)(0x2000 + 0x400 * _flagBaseNametableAddr);
+            _vRamIncrement = (_flagVRamIncrement == 0) ? 1 : 32;
+            _bgPatternTableAddress = (ushort)(_flagBgPatternTableAddr == 0 ? 0x0000 : 0x1000);
+            _spritePatternTableAddress = (ushort)(0x1000 * _flagSpritePatternTableAddr);
+
+            t = (ushort)((t & 0xF3FF) | ((data & 0x03) << 10));
         }
 
         // $2001
         public void WritePpuMask(byte data)
         {
-            // допилить
+            _flagGreyscale = (byte)(data & 1);
+            _flagShowBackgroundLeft = (byte)((data >> 1) & 1);
+            _flagShowSpritesLeft = (byte)((data >> 2) & 1);
+            _flagShowBackground = (byte)((data >> 3) & 1);
+            _flagShowSprites = (byte)((data >> 4) & 1);
+            _flagEmphasizeRed = (byte)((data >> 5) & 1);
+            _flagEmphasizeGreen = (byte)((data >> 6) & 1);
+            _flagEmphasizeBlue = (byte)((data >> 7) & 1);
         }
 
         // $2002
