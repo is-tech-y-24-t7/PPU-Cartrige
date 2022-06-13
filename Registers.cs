@@ -124,7 +124,15 @@ namespace GraphicProcessingUnit
         // $2002
         public byte ReadPpuStatus()
         {
-            // допилить
+            byte retVal = 0;
+            retVal |= (byte)(_lastRegisterWrite & 0x1F); // Наименее значащие 5 бит записи последнего регистра
+            retVal |= (byte)(_flagSpriteOverflow << 5);
+            retVal |= (byte)(_flagSpriteZeroHit << 6);
+            retVal |= (byte)(_nmiOccurred << 7);
+            _nmiOccurred = 0;
+            w = 0;
+
+            return retVal;
         }
 
         // $2004
@@ -143,13 +151,35 @@ namespace GraphicProcessingUnit
         // $2005
         public void WritePpuScroll(byte data)
         {
-            // допилить
+            if (w == 0) // Если это первая запись
+            {
+                t = (ushort)((t & 0xFFE0) | (data >> 3));
+                x = (byte)(data & 0x07);
+                w = 1;
+            }
+            else
+            {
+                t = (ushort)(t & 0xC1F);
+                t |= (ushort)((data & 0x07) << 12);
+                t |= (ushort)((data & 0xF8) << 2);
+                w = 0;
+            }
         }
 
         // $2006
         public void WritePpuAddr(byte data)
         {
-            // допилить
+            if (w == 0) // Если это первая запись
+            {
+                t = (ushort)((t & 0x00FF) | (data << 8));
+                w = 1;
+            }
+            else
+            {
+                t = (ushort)((t & 0xFF00) | data);
+                v = t;
+                w = 0;
+            }
         }
 
         // $2007
