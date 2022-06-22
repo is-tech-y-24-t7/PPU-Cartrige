@@ -373,5 +373,95 @@ namespace GraphicProcessingUnit
                 }
             }
         }
+        
+        byte LookupBackgroundColor(byte data)
+        {
+            int colorNum = data & 0x3;
+            int paletteNum = (data >> 2) & 0x3;
+            
+            if (colorNum == 0) return _memory.Read(0x3F00);
+
+            ushort paletteAddress;
+            switch (paletteNum)
+            {
+                case 0:
+                    paletteAddress = (ushort)0x3F01;
+                    break;
+                case 1:
+                    paletteAddress = (ushort)0x3F05;
+                    break;
+                case 2:
+                    paletteAddress = (ushort)0x3F09;
+                    break;
+                case 3:
+                    paletteAddress = (ushort)0x3F0D;
+                    break;
+                default:
+                    throw new Exception("Invalid background palette Number: " + paletteNum.ToString());
+            }
+
+            paletteAddress += (ushort)(colorNum - 1);
+            return _memory.Read(paletteAddress);
+        }
+
+        byte LookupSpriteColor(byte data)
+        {
+            int colorNum = data & 0x3;
+            int paletteNum = (data >> 2) & 0x3;
+
+            if (colorNum == 0) return _memory.Read(0x3F00);
+
+            ushort paletteAddress;
+            switch (paletteNum)
+            {
+                case 0:
+                    paletteAddress = (ushort) 0x3F11;
+                    break;
+                case 1:
+                    paletteAddress = (ushort) 0x3F15;
+                    break;
+                case 2:
+                    paletteAddress = (ushort) 0x3F19;
+                    break;
+                case 3:
+                    paletteAddress = (ushort) 0x3F1D;
+                    break;
+                default:
+                    throw new Exception("Invalid background palette Number: " + paletteNum.ToString());
+            }
+        }
+        
+        void RenderPixel()
+        {
+            byte bgPixelData = GetBgPixelData();
+
+            int spriteScanlineIndex;
+            byte spritePixelData = GetSpritePixelData(out spriteScanlineIndex);
+            bool isSpriteZero = _spriteIndicies[spriteScanlineIndex] == 0;
+
+            int bgColorNum = bgPixelData & 0x03;
+            int spriteColorNum = spritePixelData & 0x03;
+
+            byte color;
+
+            if (bgColorNum == 0)
+            {
+                if (spriteColorNum == 0) color = LookupBackgroundColor(bgPixelData);
+                else color = LookupSpriteColor(spritePixelData);
+            }
+            else
+            {
+                if (spriteColorNum == 0) color = LookupBackgroundColor(bgPixelData);
+                else
+                {
+                    if (isSpriteZero) _flagSpriteZeroHit = 1;
+                    int priority = (_sprites[(spriteScanlineIndex * 4) + 2] >> 5) & 1;
+                    if (priority == 1) color = LookupBackgroundColor(bgPixelData);
+                    else color = LookupSpriteColor(spritePixelData);
+                }
+            }
+
+            BitmapData[Scanline * 256 + (Cycle - 1)] = color;
+        }
     }
 }
