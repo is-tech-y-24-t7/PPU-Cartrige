@@ -103,7 +103,7 @@ namespace GraphicProcessingUnit
                 if (Cycle == 257)
                 {
                     if (0 <= Scanline && Scanline <= 239) 
-                        //noindroid TODO: EvalSprites();
+                        void EvalSprites()
                     else 
                         _numSprites = 0;
                 }
@@ -280,6 +280,38 @@ namespace GraphicProcessingUnit
         {
             ushort address = (ushort)(_bgPatternTableAddress + (_nameTableByte * 16) + FineY() + 8);
             _tileBitfieldHi = _memory.Read(address);
+        }
+        
+        void EvalSprites()
+        {
+            Array.Clear(_sprites, 0, _sprites.Length);
+            Array.Clear(_spriteIndicies, 0, _spriteIndicies.Length);
+
+            // 8x8 или 8x16 
+            int h = _flagSpriteSize == 0 ? 7 : 15;
+
+            _numSprites = 0;
+            int y = Scanline;
+            
+            for (int i = _oamAddr; i < 256; i += 4)
+            {
+                byte spriteYTop = _oam[i];
+                int offset = y - spriteYTop;
+                if (offset <= h && offset >= 0)
+                {
+                    if (_numSprites == 8)
+                    {
+                        _flagSpriteOverflow = 1;
+                        break;
+                    } 
+                    else
+                    {
+                        Array.Copy(_oam, i, _sprites, _numSprites * 4, 4);
+                        _spriteIndicies[_numSprites] = (i - _oamAddr) / 4;
+                        _numSprites++;
+                    }
+                }
+            }
         }
     }
 }
