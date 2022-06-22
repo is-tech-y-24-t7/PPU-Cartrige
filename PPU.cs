@@ -15,8 +15,8 @@ namespace GraphicProcessingUnit
         private int[] _spriteIndicies;
         private int _numSprites;
 
-        int Scanline;
-        int Cycle;
+        readonly int Scanline;
+        readonly int Cycle;
 
         ulong _tileShiftReg;
         byte _nameTableByte;
@@ -84,8 +84,8 @@ namespace GraphicProcessingUnit
 
         public void Step()
         {
-            // TODO: UpdateCounters();
-            
+            UpdateState();
+
             bool renderingEnabled = (_flagShowBackground != 0) || (_flagShowSprites != 0);
             bool renderCycle = Cycle > 0 && Cycle <= 256;
             bool preFetchCycle = Cycle >= 321 && Cycle <= 336;
@@ -117,16 +117,16 @@ namespace GraphicProcessingUnit
                     switch (Cycle % 8)
                     {
                         case 1:
-                            FetchNametableByte();
+                            FetchTileByte();
                             break;
                         case 3:
-                            FetchAttributeTableByte();
+                            FetchAttributeByte();
                             break;
                         case 5:
-                            // noindroid TODO: Fetch Bitfield Low
+                            FetchBitfieldLow();
                             break;
                         case 7:
-                            // noindroid TODO: Fetch Bitfield High
+                            FetchBitfieldHigh();
                             break;
                         case 0:
                             // noindroid TODO: save tile data
@@ -149,9 +149,47 @@ namespace GraphicProcessingUnit
             }
         }
 
-        void UpdateCounters()
+        void UpdateState()
         {
-            // TODO: implement... PAMAGITE
+            if (Scanline == 241 && Cycle == 1)
+            {
+                _nmiOccurred = 1;
+                if (_nmiOutput != 0) _console.Cpu.TriggerNmi();
+            }
+
+            bool renderingEnabled = (_flagShowBackground != 0) || (_flagShowSprites != 0);
+            
+            if (renderingEnabled)
+            {
+                if (Scanline == 261 && f == 1 && Cycle == 339)
+                {
+                    f = 0;
+                    Scanline = 0;
+                    Cycle = -1;
+                    _console.DrawFrame();
+                    return;
+                }
+            }
+            Cycle++;
+            
+            if (Cycle > 340)
+            {
+                if (Scanline == 261)
+                {
+                    if (f == 0)
+                        f = 1;
+                    else
+                        f = 0;
+                    Scanline = 0;
+                    Cycle = -1;
+                    _console.Draw(); // TODO: check if Console method named like this
+                }
+                else
+                {
+                    Cycle = -1;
+                    Scanline++;
+                }
+            }
         }
 
         void CopyHorizontalData()
@@ -230,6 +268,18 @@ namespace GraphicProcessingUnit
         {
             ushort address = (ushort)(0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07));
             _attributeTableByte = _memory.Read(address);
+        }
+
+        void FetchBitfieldLow()
+        {
+            ushort address = (ushort)(_bgPatternTableAddress + (_nameTableByte * 16) + FineY());
+            _tileBitfieldLo = _memory.Read(address);
+        }
+
+        void FetchBitfieldHigh()
+        {
+            ushort address = (ushort)(_bgPatternTableAddress + (_nameTableByte * 16) + FineY() + 8);
+            _tileBitfieldHi = _memory.Read(address);
         }
     }
 }
