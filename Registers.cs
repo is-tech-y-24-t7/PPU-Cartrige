@@ -185,7 +185,21 @@ namespace GraphicProcessingUnit
         // $2007
         public byte ReadPpuData()
         {
-            // допилить
+            byte data = _memory.Read(v);
+
+            if (v < 0x3F00)
+            {
+                byte bufferedData = _ppuDataBuffer;
+                _ppuDataBuffer = data;
+                data = bufferedData;
+            }
+            else
+            {
+                _ppuDataBuffer = _memory.Read((ushort) (v - 0x1000));
+            }
+
+            v += (ushort)(_vRamIncrement);
+            return data;
         }
         
         // $2007
@@ -198,7 +212,15 @@ namespace GraphicProcessingUnit
         // $4014
         public void WriteOamDma(byte data)
         {
-            // допилить
+            ushort startAddr = (ushort)(data << 8);
+            _console.CpuMemory.ReadBufWrapping(_oam, _oamAddr, startAddr, 256);
+
+            // OAM DMA всегда занимает не менее 513 циклов CPU
+            _console.Cpu.AddIdleCycles(513);
+
+            // OAM DMA занимает дополнительный цикл ЦП, если выполняется в нечетный цикл CPU
+            if (_console.Cpu.Cycles % 2 == 1) _console.Cpu.AddIdleCycles(1);
+        }
         }
         
         // $4014
