@@ -48,6 +48,9 @@ namespace GraphicProcessingUnit
         byte _flagEmphasizeRed;
         byte _flagEmphasizeGreen;
         byte _flagEmphasizeBlue;
+        
+        byte _flagSpriteOverflow;
+        byte _flagSpriteZeroHit;
 
         ushort v;
         ushort t;
@@ -94,8 +97,8 @@ namespace GraphicProcessingUnit
             if (Scanline == 261 && Cycle == 1)
             {
                 _nmiOccurred = 0;
-                // noindroid TODO: overflow = 0
-                // noindroid TODO: zeroHit = 0
+                _flagSpriteOverflow = 0;
+                _flagSpriteZeroHit = 0;
             }
 
             if (renderingEnabled)
@@ -129,7 +132,7 @@ namespace GraphicProcessingUnit
                             FetchBitfieldHigh();
                             break;
                         case 0:
-                            // noindroid TODO: save tile data
+                            SaveTileData();
                             IncrementX();
                             if (Cycle == 256) 
                                 IncrementY();
@@ -310,6 +313,63 @@ namespace GraphicProcessingUnit
                         _spriteIndicies[_numSprites] = (i - _oamAddr) / 4;
                         _numSprites++;
                     }
+                }
+            }
+        }
+        
+        void SaveTileData()
+        {
+            byte _palette = (byte)((_attributeTableByte >> ((CoarseX() & 0x2) | ((CoarseY() & 0x2) << 1))) & 0x3);
+            
+            ulong data = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                byte loColorBit = (byte)((_tileBitfieldLo >> (7 - i)) & 1);
+                byte hiColorBit = (byte)((_tileBitfieldHi >> (7 - i)) & 1);
+                byte colorNum = (byte)((hiColorBit << 1) | (loColorBit) & 0x03);
+
+                byte fullPixelData = (byte)(((_palette << 2) | colorNum) & 0xF);
+
+                data |= (uint)(fullPixelData << (4 * i));
+            }
+
+            _tileShiftReg &= 0xFFFFFFFF;
+            _tileShiftReg |= (data << 32);
+        }
+        
+        void UpdateCounters()
+        {
+            if (Scanline == 241 && Cycle == 1)
+            {
+                _nmiOccurred = 1;
+                if (_nmiOutput != 0) _console.Cpu.TriggerNmi();
+            }
+
+            bool renderingEnabled = (_flagShowBackground != 0) || (_flagShowSprites != 0);
+            
+            if (renderingEnabled && Scanline == 261 && f == 1 && Cycle == 339)
+            {
+                f ^= 1;
+                Scanline = 0;
+                Cycle = -1;
+                _console.DrawFrame();
+                return;
+            }
+            Cycle++;
+            
+            if (Cycle > 340)
+            {
+                if (Scanline == 261) 
+                {
+                    f ^= 1;
+                    Scanline = 0;
+                    Cycle = -1;
+                    _console.DrawFrame();
+                }
+                else 
+                {
+                    Cycle = -1;
+                    Scanline++;
                 }
             }
         }
