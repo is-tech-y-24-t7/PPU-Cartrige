@@ -48,6 +48,9 @@ namespace GraphicProcessingUnit
         byte _flagEmphasizeRed;
         byte _flagEmphasizeGreen;
         byte _flagEmphasizeBlue;
+        
+        byte _flagSpriteOverflow;
+        byte _flagSpriteZeroHit;
 
         ushort v;
         ushort t;
@@ -94,8 +97,8 @@ namespace GraphicProcessingUnit
             if (Scanline == 261 && Cycle == 1)
             {
                 _nmiOccurred = 0;
-                // noindroid TODO: overflow = 0
-                // noindroid TODO: zeroHit = 0
+                _flagSpriteOverflow = 0;
+                _flagSpriteZeroHit = 0;
             }
 
             if (renderingEnabled)
@@ -103,7 +106,7 @@ namespace GraphicProcessingUnit
                 if (Cycle == 257)
                 {
                     if (0 <= Scanline && Scanline <= 239) 
-                        //noindroid TODO: EvalSprites();
+                        void EvalSprites()
                     else 
                         _numSprites = 0;
                 }
@@ -129,7 +132,7 @@ namespace GraphicProcessingUnit
                             FetchBitfieldHigh();
                             break;
                         case 0:
-                            // noindroid TODO: save tile data
+                            SaveTileData();
                             IncrementX();
                             if (Cycle == 256) 
                                 IncrementY();
@@ -280,6 +283,185 @@ namespace GraphicProcessingUnit
         {
             ushort address = (ushort)(_bgPatternTableAddress + (_nameTableByte * 16) + FineY() + 8);
             _tileBitfieldHi = _memory.Read(address);
+        }
+        
+        void EvalSprites()
+        {
+            Array.Clear(_sprites, 0, _sprites.Length);
+            Array.Clear(_spriteIndicies, 0, _spriteIndicies.Length);
+
+            // 8x8 или 8x16 
+            int h = _flagSpriteSize == 0 ? 7 : 15;
+
+            _numSprites = 0;
+            int y = Scanline;
+            
+            for (int i = _oamAddr; i < 256; i += 4)
+            {
+                byte spriteYTop = _oam[i];
+                int offset = y - spriteYTop;
+                if (offset <= h && offset >= 0)
+                {
+                    if (_numSprites == 8)
+                    {
+                        _flagSpriteOverflow = 1;
+                        break;
+                    } 
+                    else
+                    {
+                        Array.Copy(_oam, i, _sprites, _numSprites * 4, 4);
+                        _spriteIndicies[_numSprites] = (i - _oamAddr) / 4;
+                        _numSprites++;
+                    }
+                }
+            }
+        }
+        
+        void SaveTileData()
+        {
+            byte _palette = (byte)((_attributeTableByte >> ((CoarseX() & 0x2) | ((CoarseY() & 0x2) << 1))) & 0x3);
+            
+            ulong data = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                byte loColorBit = (byte)((_tileBitfieldLo >> (7 - i)) & 1);
+                byte hiColorBit = (byte)((_tileBitfieldHi >> (7 - i)) & 1);
+                byte colorNum = (byte)((hiColorBit << 1) | (loColorBit) & 0x03);
+
+                byte fullPixelData = (byte)(((_palette << 2) | colorNum) & 0xF);
+
+                data |= (uint)(fullPixelData << (4 * i));
+            }
+
+            _tileShiftReg &= 0xFFFFFFFF;
+            _tileShiftReg |= (data << 32);
+        }
+        
+        void UpdateCounters()
+        {
+            if (Scanline == 241 && Cycle == 1)
+            {
+                _nmiOccurred = 1;
+                if (_nmiOutput != 0) _console.Cpu.TriggerNmi();
+            }
+
+            bool renderingEnabled = (_flagShowBackground != 0) || (_flagShowSprites != 0);
+            
+            if (renderingEnabled && Scanline == 261 && f == 1 && Cycle == 339)
+            {
+                f ^= 1;
+                Scanline = 0;
+                Cycle = -1;
+                _console.DrawFrame();
+                return;
+            }
+            Cycle++;
+            
+            if (Cycle > 340)
+            {
+                if (Scanline == 261) 
+                {
+                    f ^= 1;
+                    Scanline = 0;
+                    Cycle = -1;
+                    _console.DrawFrame();
+                }
+                else 
+                {
+                    Cycle = -1;
+                    Scanline++;
+                }
+            }
+        }
+        
+        byte LookupBackgroundColor(byte data)
+        {
+            int colorNum = data & 0x3;
+            int paletteNum = (data >> 2) & 0x3;
+            
+            if (colorNum == 0) return _memory.Read(0x3F00);
+
+            ushort paletteAddress;
+            switch (paletteNum)
+            {
+                case 0:
+                    paletteAddress = (ushort)0x3F01;
+                    break;
+                case 1:
+                    paletteAddress = (ushort)0x3F05;
+                    break;
+                case 2:
+                    paletteAddress = (ushort)0x3F09;
+                    break;
+                case 3:
+                    paletteAddress = (ushort)0x3F0D;
+                    break;
+                default:
+                    throw new Exception("Invalid background palette Number: " + paletteNum.ToString());
+            }
+
+            paletteAddress += (ushort)(colorNum - 1);
+            return _memory.Read(paletteAddress);
+        }
+
+        byte LookupSpriteColor(byte data)
+        {
+            int colorNum = data & 0x3;
+            int paletteNum = (data >> 2) & 0x3;
+
+            if (colorNum == 0) return _memory.Read(0x3F00);
+
+            ushort paletteAddress;
+            switch (paletteNum)
+            {
+                case 0:
+                    paletteAddress = (ushort) 0x3F11;
+                    break;
+                case 1:
+                    paletteAddress = (ushort) 0x3F15;
+                    break;
+                case 2:
+                    paletteAddress = (ushort) 0x3F19;
+                    break;
+                case 3:
+                    paletteAddress = (ushort) 0x3F1D;
+                    break;
+                default:
+                    throw new Exception("Invalid background palette Number: " + paletteNum.ToString());
+            }
+        }
+        
+        void RenderPixel()
+        {
+            byte bgPixelData = GetBgPixelData();
+
+            int spriteScanlineIndex;
+            byte spritePixelData = GetSpritePixelData(out spriteScanlineIndex);
+            bool isSpriteZero = _spriteIndicies[spriteScanlineIndex] == 0;
+
+            int bgColorNum = bgPixelData & 0x03;
+            int spriteColorNum = spritePixelData & 0x03;
+
+            byte color;
+
+            if (bgColorNum == 0)
+            {
+                if (spriteColorNum == 0) color = LookupBackgroundColor(bgPixelData);
+                else color = LookupSpriteColor(spritePixelData);
+            }
+            else
+            {
+                if (spriteColorNum == 0) color = LookupBackgroundColor(bgPixelData);
+                else
+                {
+                    if (isSpriteZero) _flagSpriteZeroHit = 1;
+                    int priority = (_sprites[(spriteScanlineIndex * 4) + 2] >> 5) & 1;
+                    if (priority == 1) color = LookupBackgroundColor(bgPixelData);
+                    else color = LookupSpriteColor(spritePixelData);
+                }
+            }
+
+            BitmapData[Scanline * 256 + (Cycle - 1)] = color;
         }
     }
 }
