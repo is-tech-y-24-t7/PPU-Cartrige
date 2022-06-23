@@ -28,11 +28,7 @@ namespace GraphicProcessingUnit.Mappers
 
         // Current number of writes to internal shift register
         int _shiftCount;
-
-        /// <summary>
-        /// Construct a new MMC1 mapper.
-        /// </summary>
-        /// <param name="console">the console that this mapper is a part of</param>
+        
         public Mmc1Mapper(Console console)
         {
             _console = console;
@@ -49,12 +45,7 @@ namespace GraphicProcessingUnit.Mappers
 
             _vramMirroringType = VramMirroring.Horizontal;
         }
-
-        /// <summary>
-        /// Read a byte from the specified address.
-        /// </summary>
-        /// <returns>the byte read from the specified address</returns>
-        /// <param name="address">the address to read a byte from</param>
+        
         public override byte Read(ushort address)
         {
             byte data;
@@ -82,13 +73,7 @@ namespace GraphicProcessingUnit.Mappers
             }
             return data;
         }
-
-        /// <summary>
-        /// Read a byte from the specified address.
-        /// </summary>
-        /// <returns>the byte read from the specified address</returns>
-        /// <param name="address">the address to read a byte from</param>
-        /// <param name="data">The data to write to the address</param>
+        
         public override void Write(ushort address, byte data)
         {
             if (address < 0x2000)
