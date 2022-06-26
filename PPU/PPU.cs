@@ -66,7 +66,7 @@ namespace GraphicProcessingUnit
             _memory = console.PpuMemory;
             _console = console;
 
-            registers = new registers(this);
+            registers = new Registers(this);
 
             BitmapData = new byte[256 * 240];
 

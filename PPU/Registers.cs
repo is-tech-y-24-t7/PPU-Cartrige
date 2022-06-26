@@ -194,9 +194,7 @@ namespace GraphicProcessingUnit
 
             if (v < 0x3F00)
             {
-                byte bufferedData = _ppuDataBuffer;
-                _ppuDataBuffer = data;
-                data = bufferedData;
+                (_ppuDataBuffer, data) = (data, _ppuDataBuffer);
             }
             else
             {

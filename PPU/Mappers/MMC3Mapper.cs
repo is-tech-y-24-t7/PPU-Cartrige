@@ -20,7 +20,7 @@ namespace GraphicProcessingUnit.Mappers
         int _irqCounter;
         byte _irqCounterReload;
         
-        public Mmc3Mapper(Console console)
+        public MMC3Mapper(Console console)
         {
             _console = console;
 

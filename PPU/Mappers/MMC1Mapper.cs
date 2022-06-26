@@ -31,7 +31,7 @@ namespace GraphicProcessingUnit.Mappers
         // Current number of writes to internal shift register
         int _shiftCount;
         
-        public Mmc1Mapper(Console console)
+        public MMC1Mapper(Console console)
         {
             _console = console;
 

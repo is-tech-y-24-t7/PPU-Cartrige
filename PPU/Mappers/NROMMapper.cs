@@ -2,7 +2,7 @@ namespace GraphicProcessingUnit.Mappers
 {
     class NROMMapper : Mapper
     {
-        public NromMapper(Console console)
+        public NROMMapper(Console console)
         {
             _console = console;
             _vramMirroringType = _console.Cartridge.VerticalVramMirroring ? VramMirroring.Vertical : VramMirroring.Horizontal;
