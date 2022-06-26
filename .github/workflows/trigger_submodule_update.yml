@@ -1,0 +1,19 @@
+name: Trigger-submodule-update
+
+on: 
+  push:
+    branches:
+      - master
+
+jobs: 
+  trigger-submodule-update:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v2.0.0
+        with:
+          token: ${{ secrets.TOKEN }}
+          repository: noidandroid/NesEmulator
+          event-type: update-submodule
+          client-payload: '{"PPU-Cartridge" : "PPU-Cartridge"}'
