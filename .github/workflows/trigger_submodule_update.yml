@@ -3,7 +3,7 @@ name: Trigger-submodule-update
 on: 
   push:
     branches:
-      - master
+      - main
 
 jobs: 
   trigger-submodule-update:
