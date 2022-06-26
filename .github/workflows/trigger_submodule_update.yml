@@ -16,4 +16,4 @@ jobs:
           token: ${{ secrets.TOKEN }}
           repository: is-tech-y-24-t7/NesEmulator
           event-type: update-submodule
-          client-payload: '{"submodule_name" : "PPU-Cartridge"}'
+          client-payload: '{"submodule_name" : "PPU-Cartrige"}'
