@@ -1,4 +1,5 @@
 using System;
+using MemoryService;
 
 namespace GraphicProcessingUnit.Mappers
 {
@@ -20,7 +21,7 @@ namespace GraphicProcessingUnit.Mappers
         int _irqCounter;
         byte _irqCounterReload;
         
-        public MMC3Mapper(Console console)
+        public MMC3Mapper(MemoryService.Console console)
         {
             _console = console;
 

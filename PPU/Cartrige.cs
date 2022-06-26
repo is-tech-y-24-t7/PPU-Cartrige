@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using MemoryService;
+
 
 namespace GraphicProcessingUnit
 {
@@ -11,7 +13,7 @@ namespace GraphicProcessingUnit
         private byte[] _chr;
         private byte[] _prgRam;
 
-        public Console Console { get; set; }
+        public MemoryService.Console Console { get; set; }
         public int PrgRomBanks { get; private set; }
         public int ChrBanks { get; private set; }
         public bool VerticalVramMirroring { get; private set; }

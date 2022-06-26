@@ -1,3 +1,4 @@
+using MemoryService;
 namespace GraphicProcessingUnit.Mappers
 {
     public abstract class Mapper
@@ -10,7 +11,7 @@ namespace GraphicProcessingUnit.Mappers
             SingleUpper,
         }
         
-        protected Console _console;
+        protected MemoryService.Console _console;
         protected VramMirroring _vramMirroringType;
         
         public int VramAddressToIndex(ushort address)

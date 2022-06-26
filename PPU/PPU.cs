@@ -58,6 +58,11 @@ namespace GraphicProcessingUnit
         byte w;
         byte f;
         
+        public bool RenderingEnabled
+        {
+            get { return _flagShowSprites != 0 || _flagShowBackground != 0; }
+        }
+        
         public byte[] BitmapData { get; }
 
 

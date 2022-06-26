@@ -1,8 +1,9 @@
 using System;
+using MemoryService;
 
 namespace GraphicProcessingUnit.Mappers
 {
-    public class MMC1Mapper : Mapper
+    public class Mmc1Mapper : Mapper
     {
         // Common shift register
         byte _shiftReg;
@@ -30,8 +31,8 @@ namespace GraphicProcessingUnit.Mappers
 
         // Current number of writes to internal shift register
         int _shiftCount;
-        
-        public MMC1Mapper(Console console)
+
+        public Mmc1Mapper(MemoryService.Console console)
         {
             _console = console;
 
@@ -47,7 +48,7 @@ namespace GraphicProcessingUnit.Mappers
 
             _vramMirroringType = VramMirroring.Horizontal;
         }
-        
+
         public override byte Read(ushort address)
         {
             byte data;
@@ -63,7 +64,7 @@ namespace GraphicProcessingUnit.Mappers
             }
             else if (address >= 0x8000 && address <= 0xFFFF) // 2 PRG ROM banks
             {
-  
+
                 address -= 0x8000;
                 int offset = (address / 0x4000) == 0 ? _prgBank0Offset : _prgBank1Offset;
                 offset += address % 0x4000;
@@ -73,14 +74,16 @@ namespace GraphicProcessingUnit.Mappers
             {
                 throw new Exception("Invalid Mapper read at address " + address.ToString("X4"));
             }
+
             return data;
         }
-        
+
         public override void Write(ushort address, byte data)
         {
             if (address < 0x2000)
             {
-                if (!_console.Cartridge.UsesChrRam) throw new Exception("Attempt to write to CHR ROM at " + address.ToString("X4"));
+                if (!_console.Cartridge.UsesChrRam)
+                    throw new Exception("Attempt to write to CHR ROM at " + address.ToString("X4"));
 
                 int offset = (address / 0x1000) == 0 ? _chrBank0Offset : _chrBank1Offset;
                 offset += address % 0x1000;
@@ -105,13 +108,13 @@ namespace GraphicProcessingUnit.Mappers
             if ((data & 0x80) != 0)
             {
                 // If bit 7 set, clear internal shift register
-                WriteRegister(address, (byte)(_shiftReg | 0x0C));
+                WriteRegister(address, (byte) (_shiftReg | 0x0C));
                 _shiftReg = 0;
                 _shiftCount = 0;
             }
             else
             {
-                _shiftReg |= (byte)((data & 1) << _shiftCount);
+                _shiftReg |= (byte) ((data & 1) << _shiftCount);
                 _shiftCount++;
 
                 if (_shiftCount == 5)
@@ -150,9 +153,9 @@ namespace GraphicProcessingUnit.Mappers
         void WriteControlReg(byte data)
         {
             _controlReg = data;
-            _prgMode = (byte)((data >> 2) & 0x03);
-            _chrMode = (byte)((data >> 4) & 0x01);
-            switch(_controlReg & 0x03)
+            _prgMode = (byte) ((data >> 2) & 0x03);
+            _chrMode = (byte) ((data >> 4) & 0x01);
+            switch (_controlReg & 0x03)
             {
                 case 0:
                     _vramMirroringType = VramMirroring.SingleLower;
@@ -167,6 +170,7 @@ namespace GraphicProcessingUnit.Mappers
                     _vramMirroringType = VramMirroring.Horizontal;
                     break;
             }
+
             UpdateBankOffsets();
         }
 
@@ -226,4 +230,5 @@ namespace GraphicProcessingUnit.Mappers
                     break;
             }
         }
+    }
 }
