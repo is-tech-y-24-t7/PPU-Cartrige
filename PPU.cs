@@ -434,6 +434,8 @@ namespace GraphicProcessingUnit
                 default:
                     throw new Exception("Invalid background palette Number: " + paletteNum.ToString());
             }
+            paletteAddress += (ushort)(colorNum - 1);
+            return _memory.Read(paletteAddress);
         }
         
         void RenderPixel()
