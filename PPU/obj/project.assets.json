@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\hemke\\Desktop\\PPU-Cartrige\\PPU\\PPU.csproj",
+      "projectUniqueName": "C:\\Users\\hemke\\RiderProjects\\PPU-Cartrige\\PPU\\PPU.csproj",
       "projectName": "PPU",
-      "projectPath": "C:\\Users\\hemke\\Desktop\\PPU-Cartrige\\PPU\\PPU.csproj",
+      "projectPath": "C:\\Users\\hemke\\RiderProjects\\PPU-Cartrige\\PPU\\PPU.csproj",
       "packagesPath": "C:\\Users\\hemke\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\hemke\\Desktop\\PPU-Cartrige\\PPU\\obj\\",
+      "outputPath": "C:\\Users\\hemke\\RiderProjects\\PPU-Cartrige\\PPU\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\hemke\\AppData\\Roaming\\NuGet\\NuGet.Config",

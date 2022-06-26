@@ -15,8 +15,8 @@ namespace GraphicProcessingUnit
         private int[] _spriteIndicies;
         private int _numSprites;
 
-        readonly int Scanline;
-        readonly int Cycle;
+        public int Scanline{ get; private set; } 
+        public int Cycle{ get; private set; }
 
         ulong _tileShiftReg;
         byte _nameTableByte;
@@ -57,6 +57,8 @@ namespace GraphicProcessingUnit
         byte x;
         byte w;
         byte f;
+        
+        public byte[] BitmapData { get; }
 
 
         public PPU(Console console)
@@ -110,8 +112,8 @@ namespace GraphicProcessingUnit
             {
                 if (Cycle == 257)
                 {
-                    if (0 <= Scanline && Scanline <= 239) 
-                        void EvalSprites()
+                    if (0 <= Scanline && Scanline <= 239)
+                        EvalSprites();
                     else 
                         _numSprites = 0;
                 }
@@ -150,10 +152,10 @@ namespace GraphicProcessingUnit
                     _oamAddr = 0;
                 
                 if (Cycle == 257 && ((0 <= Scanline && Scanline <= 239) || Scanline == 261)) 
-                    CopyHorizPositionData();
+                    CopyHorizontalData();
 
                 if (Cycle >= 280 && Cycle <= 304 && Scanline == 261) 
-                    CopyVertPositionData();
+                    CopyVerticalData();
             }
         }
 
@@ -219,8 +221,8 @@ namespace GraphicProcessingUnit
         {
             if ((v & 0x001F) == 31)
             {
-                v = v & ~0x001F;
-                v = v ^ 0x0400;
+                v = (ushort) (v & ~0x001F);
+                v = (ushort) (v ^ 0x0400);
             }
             else
             {
@@ -241,24 +243,23 @@ namespace GraphicProcessingUnit
             }
             else
             {
-                v = v & ~0x7000;
+                v = (ushort) (v & ~0x7000);
                 int y = (v & 0x03E0) >> 5;
-                if (y == 29)
+                switch (y)
                 {
-                    y = 0;
-                    v = v ^ 0x0800;
+                    case 29:
+                        y = 0;
+                        v = (ushort) (v ^ 0x0800);
+                        break;
+                    case 31:
+                        y = 0;
+                        break;
+                    default:
+                        y += 1;
+                        break;
                 }
-                else if (y == 31)
-                {
-                    y = 0;
-                }
-                else
-                {
-                    y += 1;
-                }
+                v = (ushort) ((v & ~0x03E0) | (y << 5));
             }
-
-            v = (v & ~0x03E0) | (y << 5);
         }
 
         int FineY()
@@ -341,44 +342,7 @@ namespace GraphicProcessingUnit
             _tileShiftReg &= 0xFFFFFFFF;
             _tileShiftReg |= (data << 32);
         }
-        
-        void UpdateCounters()
-        {
-            if (Scanline == 241 && Cycle == 1)
-            {
-                _nmiOccurred = 1;
-                if (_nmiOutput != 0) _console.Cpu.TriggerNmi();
-            }
 
-            bool renderingEnabled = (_flagShowBackground != 0) || (_flagShowSprites != 0);
-            
-            if (renderingEnabled && Scanline == 261 && f == 1 && Cycle == 339)
-            {
-                f ^= 1;
-                Scanline = 0;
-                Cycle = -1;
-                _console.DrawFrame();
-                return;
-            }
-            Cycle++;
-            
-            if (Cycle > 340)
-            {
-                if (Scanline == 261) 
-                {
-                    f ^= 1;
-                    Scanline = 0;
-                    Cycle = -1;
-                    _console.DrawFrame();
-                }
-                else 
-                {
-                    Cycle = -1;
-                    Scanline++;
-                }
-            }
-        }
-        
         byte LookupBackgroundColor(byte data)
         {
             int colorNum = data & 0x3;
@@ -470,5 +434,88 @@ namespace GraphicProcessingUnit
 
             BitmapData[Scanline * 256 + (Cycle - 1)] = color;
         }
+        
+        byte GetBgPixelData()
+        {
+            int xPos = Cycle - 1;
+
+            if (_flagShowBackground == 0) return 0;
+            if (_flagShowBackgroundLeft == 0 && xPos < 8) return 0;
+
+            return (byte)((_tileShiftReg >> (x * 4)) & 0xF);
+        }
+        
+        byte GetSpritePixelData(out int spriteIndex)
+        {
+            int xPos = Cycle - 1;
+            int yPos = Scanline - 1;
+
+            spriteIndex = 0;
+
+            if (_flagShowSprites == 0) return 0;
+            if (_flagShowSpritesLeft == 0 && xPos < 8) return 0;
+            
+            ushort _currSpritePatternTableAddr = _spritePatternTableAddress;
+            
+            for (int i = 0; i < _numSprites * 4; i += 4)
+            {
+                int spriteXLeft = _sprites[i + 3];
+                int offset = xPos - spriteXLeft;
+
+                if (offset <= 7 && offset >= 0)
+                {
+                    int yOffset = yPos - _sprites[i];
+                    byte patternIndex;
+                    if (_flagSpriteSize == 1)
+                    {
+                        _currSpritePatternTableAddr = (ushort)((_sprites[i + 1] & 1) * 0x1000);
+                        patternIndex = (byte)(_sprites[i + 1] & 0xFE);
+                    }
+                    else
+                    {
+                        patternIndex = (byte)(_sprites[i + 1]);
+                    }
+
+                    ushort patternAddress = (ushort)(_currSpritePatternTableAddr + (patternIndex * 16));
+
+                    bool flipHoriz = (_sprites[i + 2] & 0x40) != 0;
+                    bool flipVert = (_sprites[i + 2] & 0x80) != 0;
+                    int colorNum = GetSpritePatternPixel(patternAddress, offset, yOffset, flipHoriz, flipVert);
+                    
+                    if (colorNum == 0)
+                    {
+                        continue;
+                    }
+                    else 
+                    {
+                        byte paletteNum = (byte)(_sprites[i + 2] & 0x03);
+                        spriteIndex = i / 4;
+                        return (byte)(((paletteNum << 2) | colorNum) & 0xF);
+                    }
+                }
+            }
+            return 0x00; 
+        }
+        
+        int GetSpritePatternPixel(ushort patternAddr, int xPos, int yPos, bool flipHoriz = false, bool flipVert = false)
+        {
+            int h = _flagSpriteSize == 0 ? 7 : 15;
+            xPos = flipHoriz ? 7 - xPos : xPos;
+            yPos = flipVert ? h - yPos : yPos;
+            
+            ushort yAddr;
+            if (yPos <= 7) yAddr = (ushort)(patternAddr + yPos);
+            else yAddr = (ushort)(patternAddr + 16 + (yPos - 8)); 
+            
+            byte[] pattern = new byte[2];
+            pattern[0] = _memory.Read(yAddr);
+            pattern[1] = _memory.Read((ushort)(yAddr + 8));
+            
+            byte loBit = (byte)((pattern[0] >> (7 - xPos)) & 1);
+            byte hiBit = (byte)((pattern[1] >> (7 - xPos)) & 1);
+
+            return ((hiBit << 1) | loBit) & 0x03;
+        }
+
     }
 }
