@@ -1,11 +1,13 @@
 using System;
+using MemoryService;
+
 
 namespace GraphicProcessingUnit
 {
     public class Registers : IRegisters
     {
-        readonly PpuMemory _memory;
-        readonly Console _console;
+        readonly MemoryService.PpuMemory _memory;
+        readonly MemoryService.Console _console;
         byte[] _oam;
         ushort _oamAddr;
 		ushort _baseNametableAddress;

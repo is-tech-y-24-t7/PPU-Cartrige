@@ -1,11 +1,12 @@
 ﻿using System;
+using MemoryService;
 
 namespace GraphicProcessingUnit
 {
     public class PPU
     {
-        readonly PpuMemory _memory;
-        readonly Console _console;
+        readonly MemoryService.PpuMemory _memory;
+        readonly MemoryService.Console _console;
         
         public Registers registers;
 

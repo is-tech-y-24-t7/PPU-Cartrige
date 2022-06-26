@@ -1,8 +1,10 @@
+using MemoryService;
+
 namespace GraphicProcessingUnit.Mappers
 {
     class NROMMapper : Mapper
     {
-        public NROMMapper(Console console)
+        public NROMMapper(MemoryService.Console console)
         {
             _console = console;
             _vramMirroringType = _console.Cartridge.VerticalVramMirroring ? VramMirroring.Vertical : VramMirroring.Horizontal;

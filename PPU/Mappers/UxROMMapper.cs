@@ -1,4 +1,5 @@
 using System;
+using MemoryService;
 
 namespace GraphicProcessingUnit.Mappers
 {
@@ -7,7 +8,7 @@ namespace GraphicProcessingUnit.Mappers
         int _bank0Offset;
         int _bank1Offset;
         
-        public UxRomMapper(Console console)
+        public UxRomMapper(MemoryService.Console console)
         {
             _console = console;
             _bank0Offset = 0;
