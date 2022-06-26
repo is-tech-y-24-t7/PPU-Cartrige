@@ -14,6 +14,6 @@ jobs:
         uses: peter-evans/repository-dispatch@v2.0.0
         with:
           token: ${{ secrets.TOKEN }}
-          repository: noidandroid/NesEmulator
+          repository: is-tech-y-24-t7/NesEmulator
           event-type: update-submodule
           client-payload: '{"submodule_name" : "PPU-Cartridge"}'
