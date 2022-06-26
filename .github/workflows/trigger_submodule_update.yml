@@ -16,4 +16,4 @@ jobs:
           token: ${{ secrets.TOKEN }}
           repository: noidandroid/NesEmulator
           event-type: update-submodule
-          client-payload: '{"PPU-Cartridge" : "PPU-Cartridge"}'
+          client-payload: '{"PPU-Cartridge" : "NesEmulator"}'
