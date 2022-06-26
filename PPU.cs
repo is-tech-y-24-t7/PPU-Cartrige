@@ -64,6 +64,8 @@ namespace GraphicProcessingUnit
             _memory = console.PpuMemory;
             _console = console;
 
+            registers = new registers(this);
+
             BitmapData = new byte[256 * 240];
 
             _oam = new byte[256];
@@ -77,6 +79,9 @@ namespace GraphicProcessingUnit
 
             Scanline = 240;
             Cycle = 340;
+
+            _nmiOccurred = 0;
+            _nmiOutput = 0;
 
             w = 0;
             f = 0;
@@ -185,7 +190,7 @@ namespace GraphicProcessingUnit
                         f = 0;
                     Scanline = 0;
                     Cycle = -1;
-                    _console.Draw(); // TODO: check if Console method named like this
+                    _console.DrawFrame();
                 }
                 else
                 {

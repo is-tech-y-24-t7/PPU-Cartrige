@@ -2,36 +2,12 @@ namespace GraphicProcessingUnit
 {
     public class Registers : IRegisters
     {
-        readonly PpuMemory _memory;
-        readonly Console _console;
-        byte[] _oam;
-        ushort _oamAddr;
-		ushort _baseNametableAddress;
-        int _vRamIncrement;
-        ushort _bgPatternTableAddress;
-        ushort _spritePatternTableAddress;
-        int _vRamIncrement;
-        byte _lastRegisterWrite;
-        byte _flagBaseNametableAddr;
-        byte _flagVRamIncrement;
-        byte _flagSpritePatternTableAddr;
-        byte _flagBgPatternTableAddr;
-        byte _flagSpriteSize;
-        byte _flagMasterSlaveSelect;
-        byte _nmiOutput;
-		byte _flagGreyscale;
-        byte _flagShowBackgroundLeft;
-        byte _flagShowSpritesLeft;
-        byte _flagShowBackground;
-        byte _flagShowSprites;
-        byte _flagEmphasizeRed;
-        byte _flagEmphasizeGreen;
-        byte _flagEmphasizeBlue;
-        ushort v;
-        ushort t;
-        byte x;
-        byte w;
-        byte f;
+        private PPU _ppu;
+
+        public Registers(PPU ppu)
+        {
+            _ppu = ppu;
+        }
 
         public byte ReadFromRegister(ushort address)
         {
@@ -91,19 +67,19 @@ namespace GraphicProcessingUnit
         // $2000
         public void WritePpuCtrl(byte data)
         {
-            _flagBaseNametableAddr = (byte)(data & 0x3);
-            _flagVRamIncrement = (byte)((data >> 2) & 1);
-            _flagSpritePatternTableAddr = (byte)((data >> 3) & 1);
-            _flagBgPatternTableAddr = (byte)((data >> 4) & 1);
-            _flagSpriteSize = (byte)((data >> 5) & 1);
-            _flagMasterSlaveSelect = (byte)((data >> 6) & 1);
-            _nmiOutput = (byte)((data >> 7) & 1);
+            _ppu._flagBaseNametableAddr = (byte)(data & 0x3);
+            _ppu._flagVRamIncrement = (byte)((data >> 2) & 1);
+            _ppu._flagSpritePatternTableAddr = (byte)((data >> 3) & 1);
+            _ppu._flagBgPatternTableAddr = (byte)((data >> 4) & 1);
+            _ppu._flagSpriteSize = (byte)((data >> 5) & 1);
+            _ppu._flagMasterSlaveSelect = (byte)((data >> 6) & 1);
+            _ppu._nmiOutput = (byte)((data >> 7) & 1);
 
             // Установка значений на основе флагов
-            _baseNametableAddress = (ushort)(0x2000 + 0x400 * _flagBaseNametableAddr);
-            _vRamIncrement = (_flagVRamIncrement == 0) ? 1 : 32;
-            _bgPatternTableAddress = (ushort)(_flagBgPatternTableAddr == 0 ? 0x0000 : 0x1000);
-            _spritePatternTableAddress = (ushort)(0x1000 * _flagSpritePatternTableAddr);
+            _ppu._baseNametableAddress = (ushort)(0x2000 + 0x400 * _ppu._flagBaseNametableAddr);
+            _ppu._vRamIncrement = (_ppu._flagVRamIncrement == 0) ? 1 : 32;
+            _ppu._bgPatternTableAddress = (ushort)(_ppu._flagBgPatternTableAddr == 0 ? 0x0000 : 0x1000);
+            _ppu._spritePatternTableAddress = (ushort)(0x1000 * _ppu._flagSpritePatternTableAddr);
 
             t = (ushort)((t & 0xF3FF) | ((data & 0x03) << 10));
         }
@@ -111,25 +87,25 @@ namespace GraphicProcessingUnit
         // $2001
         public void WritePpuMask(byte data)
         {
-            _flagGreyscale = (byte)(data & 1);
-            _flagShowBackgroundLeft = (byte)((data >> 1) & 1);
-            _flagShowSpritesLeft = (byte)((data >> 2) & 1);
-            _flagShowBackground = (byte)((data >> 3) & 1);
-            _flagShowSprites = (byte)((data >> 4) & 1);
-            _flagEmphasizeRed = (byte)((data >> 5) & 1);
-            _flagEmphasizeGreen = (byte)((data >> 6) & 1);
-            _flagEmphasizeBlue = (byte)((data >> 7) & 1);
+            _ppu._flagGreyscale = (byte)(data & 1);
+            _ppu._flagShowBackgroundLeft = (byte)((data >> 1) & 1);
+            _ppu._flagShowSpritesLeft = (byte)((data >> 2) & 1);
+            _ppu._flagShowBackground = (byte)((data >> 3) & 1);
+            _ppu._flagShowSprites = (byte)((data >> 4) & 1);
+            _ppu._flagEmphasizeRed = (byte)((data >> 5) & 1);
+            _ppu._flagEmphasizeGreen = (byte)((data >> 6) & 1);
+            _ppu._flagEmphasizeBlue = (byte)((data >> 7) & 1);
         }
 
         // $2002
         public byte ReadPpuStatus()
         {
             byte retVal = 0;
-            retVal |= (byte)(_lastRegisterWrite & 0x1F); // Наименее значащие 5 бит записи последнего регистра
-            retVal |= (byte)(_flagSpriteOverflow << 5);
-            retVal |= (byte)(_flagSpriteZeroHit << 6);
-            retVal |= (byte)(_nmiOccurred << 7);
-            _nmiOccurred = 0;
+            retVal |= (byte)(_ppu._lastRegisterWrite & 0x1F); // Наименее значащие 5 бит записи последнего регистра
+            retVal |= (byte)(_ppu._flagSpriteOverflow << 5);
+            retVal |= (byte)(_ppu._flagSpriteZeroHit << 6);
+            retVal |= (byte)(_ppu._nmiOccurred << 7);
+            _ppu._nmiOccurred = 0;
             w = 0;
 
             return retVal;
@@ -138,95 +114,95 @@ namespace GraphicProcessingUnit
         // $2004
         public byte ReadOamData()
         {
-            return _oam[_oamAddr];
+            return _ppu._oam[_oamAddr];
         }
         
         // $2004
         public void WriteOamData(byte data)
         {
-            _oam[_oamAddr] = data;
-            _oamAddr++;
+            _ppu._oam[_oamAddr] = data;
+            _ppu._oamAddr++;
         }
 
         // $2005
         public void WritePpuScroll(byte data)
         {
-            if (w == 0) // Если это первая запись
+            if (_ppu.w == 0) // Если это первая запись
             {
-                t = (ushort)((t & 0xFFE0) | (data >> 3));
-                x = (byte)(data & 0x07);
-                w = 1;
+                _ppu.t = (ushort)((_ppu.t & 0xFFE0) | (data >> 3));
+                _ppu.x = (byte)(data & 0x07);
+                _ppu.w = 1;
             }
             else
             {
-                t = (ushort)(t & 0xC1F);
-                t |= (ushort)((data & 0x07) << 12);
-                t |= (ushort)((data & 0xF8) << 2);
-                w = 0;
+                _ppu.t = (ushort)(_ppu.t & 0xC1F);
+                _ppu.t |= (ushort)((data & 0x07) << 12);
+                _ppu.t |= (ushort)((data & 0xF8) << 2);
+                _ppu.w = 0;
             }
         }
 
         // $2006
         public void WritePpuAddr(byte data)
         {
-            if (w == 0) // Если это первая запись
+            if (_ppu.w == 0) // Если это первая запись
             {
-                t = (ushort)((t & 0x00FF) | (data << 8));
-                w = 1;
+                _ppu.t = (ushort)((_ppu.t & 0x00FF) | (data << 8));
+                _ppu.w = 1;
             }
             else
             {
-                t = (ushort)((t & 0xFF00) | data);
-                v = t;
-                w = 0;
+                _ppu.t = (ushort)((_ppu.t & 0xFF00) | data);
+                _ppu.v = _ppu.t;
+                _ppu.w = 0;
             }
         }
 
         // $2007
         public byte ReadPpuData()
         {
-            byte data = _memory.Read(v);
+            byte data = _memory.Read(_ppu.v);
 
-            if (v < 0x3F00)
+            if (_ppu.v < 0x3F00)
             {
-                byte bufferedData = _ppuDataBuffer;
-                _ppuDataBuffer = data;
+                byte bufferedData = _ppu._ppuDataBuffer;
+                _ppu._ppuDataBuffer = data;
                 data = bufferedData;
             }
             else
             {
-                _ppuDataBuffer = _memory.Read((ushort) (v - 0x1000));
+                _ppu._ppuDataBuffer = _memory.Read((ushort) (_ppu.v - 0x1000));
             }
 
-            v += (ushort)(_vRamIncrement);
+            _ppu.v += (ushort)(_ppu._vRamIncrement);
             return data;
         }
         
         // $2007
         public void WritePpuData(byte data)
         {
-            _memory.Write(v, data);
-            v += (ushort)(_vRamIncrement);
+            _memory.Write(_ppu.v, data);
+            _ppu.v += (ushort)(_ppu._vRamIncrement);
         }
 
         // $4014
         public void WriteOamDma(byte data)
         {
             ushort startAddr = (ushort)(data << 8);
-            _console.CpuMemory.ReadBufWrapping(_oam, _oamAddr, startAddr, 256);
+            _ppu._console.CpuMemory.ReadBufWrapping(_ppu._oam, _ppu._oamAddr, startAddr, 256);
 
             // OAM DMA всегда занимает не менее 513 циклов CPU
-            _console.Cpu.AddIdleCycles(513);
+            _ppu._console.Cpu.AddIdleCycles(513);
 
             // OAM DMA занимает дополнительный цикл ЦП, если выполняется в нечетный цикл CPU
-            if (_console.Cpu.Cycles % 2 == 1) _console.Cpu.AddIdleCycles(1);
+            if (_ppu._console.Cpu.Cycles % 2 == 1) _ppu._console.Cpu.AddIdleCycles(1);
         }
         }
         
         // $4014
         public void WriteOamAddr(byte data)
         {
-            _oamAddr = data;
+            _ppu._oamAddr = data;
         }
     }
 }
