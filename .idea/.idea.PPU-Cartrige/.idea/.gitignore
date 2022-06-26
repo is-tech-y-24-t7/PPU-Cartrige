@@ -3,9 +3,9 @@
 /workspace.xml
 # Rider ignored files
 /projectSettingsUpdater.xml
-/.idea.PPU-Cartrige.iml
 /contentModel.xml
 /modules.xml
+/.idea.PPU-Cartrige.iml
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml

@@ -1,3 +1,5 @@
+using System;
+
 namespace GraphicProcessingUnit
 {
     public class Registers : IRegisters
@@ -10,7 +12,6 @@ namespace GraphicProcessingUnit
         int _vRamIncrement;
         ushort _bgPatternTableAddress;
         ushort _spritePatternTableAddress;
-        int _vRamIncrement;
         byte _lastRegisterWrite;
         byte _flagBaseNametableAddr;
         byte _flagVRamIncrement;
@@ -32,6 +33,10 @@ namespace GraphicProcessingUnit
         byte x;
         byte w;
         byte f;
+        byte _ppuDataBuffer;
+        byte _flagSpriteOverflow;
+        byte _flagSpriteZeroHit;
+        byte _nmiOccurred;
 
         public byte ReadFromRegister(ushort address)
         {
@@ -210,6 +215,12 @@ namespace GraphicProcessingUnit
         }
 
         // $4014
+        public void WriteOamAddr(byte data)
+        {
+            _oamAddr = data;
+        }
+
+        // $4014
         public void WriteOamDma(byte data)
         {
             ushort startAddr = (ushort)(data << 8);
@@ -221,12 +232,7 @@ namespace GraphicProcessingUnit
             // OAM DMA занимает дополнительный цикл ЦП, если выполняется в нечетный цикл CPU
             if (_console.Cpu.Cycles % 2 == 1) _console.Cpu.AddIdleCycles(1);
         }
-        }
-        
-        // $4014
-        public void WriteOamAddr(byte data)
-        {
-            _oamAddr = data;
-        }
     }
+        
+        
 }

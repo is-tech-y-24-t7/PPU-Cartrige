@@ -1,3 +1,5 @@
+using System;
+
 namespace GraphicProcessingUnit.Mappers
 {
     public class MMC3Mapper : Mapper
