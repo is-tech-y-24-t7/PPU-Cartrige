@@ -3,7 +3,7 @@ name: Trigger-submodule-update
 on: 
   push:
     branches:
-      - master
+      - main
 
 jobs: 
   trigger-submodule-update:
@@ -14,6 +14,6 @@ jobs:
         uses: peter-evans/repository-dispatch@v2.0.0
         with:
           token: ${{ secrets.TOKEN }}
-          repository: is-tech-y-24-t7/NesEmulator
+          repository: noidandroid/NesEmulator
           event-type: update-submodule
-          client-payload: '{"submodule_name" : "PPU-Cartrige"}'
+          client-payload: '{"submodule_name" : "PPU-Cartridge"}'
