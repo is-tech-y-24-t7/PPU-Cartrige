@@ -132,7 +132,7 @@ namespace GraphicProcessingUnit.Mappers
             else
             {
                 _irqCounter--;
-                if (_irqCounter == 0 && _irqEnabled) _console.Cpu.TriggerIrq();
+                if (_irqCounter == 0 && _irqEnabled) _console.Cpu.TriggerIRQ();
             }
         }
 

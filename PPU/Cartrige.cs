@@ -131,7 +131,7 @@ namespace GraphicProcessingUnit
             if (VerticalVramMirroring)
                 System.Console.WriteLine("Вертикальное отражение");
             else
-                System.Console.WriteLine("Горизонтальное отражение")
+                System.Console.WriteLine("Горизонтальное отражение");
 
             BatteryBackedMemory = (_flags6 & 0b00000010) != 0;
             ContainsTrainer = (_flags6 & 0b00000100) != 0;

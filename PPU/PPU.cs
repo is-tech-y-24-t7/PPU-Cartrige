@@ -1,5 +1,6 @@
 ﻿using System;
 using MemoryService;
+using Console = MemoryService.Console;
 
 namespace GraphicProcessingUnit
 {
@@ -72,7 +73,7 @@ namespace GraphicProcessingUnit
             _memory = console.PpuMemory;
             _console = console;
 
-            registers = new Registers(this);
+            registers = new Registers();
 
             BitmapData = new byte[256 * 240];
 
@@ -170,7 +171,7 @@ namespace GraphicProcessingUnit
             if (Scanline == 241 && Cycle == 1)
             {
                 _nmiOccurred = 1;
-                if (_nmiOutput != 0) _console.Cpu.TriggerNmi();
+                if (_nmiOutput != 0) _console.Cpu.TriggerNMI();
             }
 
             bool renderingEnabled = (_flagShowBackground != 0) || (_flagShowSprites != 0);
